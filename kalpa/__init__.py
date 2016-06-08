@@ -42,12 +42,12 @@ class Branch(Leaf):
 
     def __getitem__(self, path):
         """Return the requested child instance or raise KeyError."""
+        if path in self.__children__:
+            return self.__children__[path]
         if self._SUBPATHS is None:
             raise KeyError(path)
-        if path not in self.__children__:
-            resource_class, name = self._SUBPATHS[path]
-            return self._create_and_cache_child(resource_class, name, path)
-        return self.__children__[path]
+        resource_class, name = self._SUBPATHS[path]
+        return self._create_and_cache_child(resource_class, name, path)
 
     def _sprout(self, _name, **attrs):
         """Creates and returns a child resource of the type registered."""
