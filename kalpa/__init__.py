@@ -49,17 +49,17 @@ class Branch(Leaf):
             return self._create_and_cache_child(resource_class, name, path)
         return self.__children__[path]
 
-    def _sprout(self, _name, **attributes):
+    def _sprout(self, _name, **attrs):
         """Creates and returns a child resource of the type registered."""
         return self._create_and_cache_child(
-            self._CHILD_CLS, _name, _name, **attributes)
+            self._CHILD_CLS, _name, _name, attrs=attrs)
 
-    def _sprout_resource(self, _resource_cls, _name, **attributes):
+    def _sprout_resource(self, _resource_cls, _name, **attrs):
         """Adds a child resource of the provided type, with given name."""
         return self._create_and_cache_child(
-            _resource_cls, _name, _name, attributes)
+            _resource_cls, _name, _name, attrs=attrs)
 
-    def _create_and_cache_child(self, resource_cls, name, path, attributes):
+    def _create_and_cache_child(self, resource_cls, name, path, attrs=None):
         """Adds a child resource to a subpath.
 
         The resource class is created from the canonical path (name) and added
@@ -69,7 +69,9 @@ class Branch(Leaf):
         After creation, the resource is added to the __children__ cache for
         future retrieval, ensuring consistent lineage for Pyramid usage.
         """
-        resource = resource_cls(name, self, **attributes)
+        if attrs is None:
+            attrs = {}
+        resource = resource_cls(name, self, **attrs)
         self.__children__[path] = resource
         return resource
 
