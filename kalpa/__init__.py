@@ -40,6 +40,10 @@ class Branch(Leaf):
         super(Branch, self).__init__(_name, _parent, **attributes)
         self.__children__ = {}
 
+    def __contains__(self, path):
+        """Returns whether or not the provided path is in the child cache."""
+        return path in self.__children__
+
     def __getitem__(self, path):
         """Return the requested child instance or raise KeyError."""
         if path in self.__children__:
