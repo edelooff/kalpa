@@ -93,3 +93,8 @@ class TestBranchingResource(object):
         leaf = root['objects']['any']
         assert location.inside(leaf, root)
         assert location.inside(leaf, root['objects'])
+
+    def test_object_caching(self, branching_tree):
+        """Retrieving the same object twice should provide the same one."""
+        root = branching_tree['root']
+        assert root['objects']['leaf'] is root['objects']['leaf']

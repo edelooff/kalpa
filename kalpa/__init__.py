@@ -46,38 +46,41 @@ class Branch(Leaf):
 
     def __getitem__(self, path):
         """Return the requested child instance or raise KeyError."""
-        if path in self.__children__:
-            return self.__children__[path]
         if self._SUBPATHS is None:
             raise KeyError(path)
         resource_class, name = self._SUBPATHS[path]
-        return self._create_and_cache_child(resource_class, name, path)
+        return self._create_or_load_child(resource_class, path, name)
 
     def _sprout(self, _name, **attrs):
         """Creates and returns a child resource of the type registered."""
-        return self._create_and_cache_child(
+        return self._create_or_load_child(
             self._CHILD_CLS, _name, _name, attrs=attrs)
 
     def _sprout_resource(self, _resource_cls, _name, **attrs):
         """Adds a child resource of the provided type, with given name."""
-        return self._create_and_cache_child(
+        return self._create_or_load_child(
             _resource_cls, _name, _name, attrs=attrs)
 
-    def _create_and_cache_child(self, resource_cls, name, path, attrs=None):
-        """Adds a child resource to a subpath.
+    def _create_or_load_child(self, resource_cls, path, name, attrs=None):
+        """Returns a child resource from a path or adds it there.
 
-        The resource class is created from the canonical path (name) and added
-        to the provided path segment. Additional keyword arguments are used to
-        instantiate the resource class with.
+        If a resource already exists on the provided path, this resource will
+        always be returned (regardless of type, name and attributes).
+
+        If a resource could not be loaded from the provided path, a new one
+        is created from the provided resource class, name and attributes.
 
         After creation, the resource is added to the __children__ cache for
-        future retrieval, ensuring consistent lineage for Pyramid usage.
+        future retrieval, ensuring consistent resource lineage.
         """
-        if attrs is None:
-            attrs = {}
-        resource = resource_cls(name, self, **attrs)
-        self.__children__[path] = resource
-        return resource
+        try:
+            return self.__children__[path]
+        except KeyError:
+            if attrs is None:
+                attrs = {}
+            resource = resource_cls(name, self, **attrs)
+            self.__children__[path] = resource
+            return resource
 
     @classmethod
     def attach(cls, canonical_path, aliases=()):
