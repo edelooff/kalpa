@@ -95,10 +95,10 @@ class Branch(Leaf):
         return _attach_resource
 
     @classmethod
-    def child_resource(cls):
+    def child_resource(cls, child_cls):
         """Adds a resource class as the default child resource to sprout."""
-        cls._CHILD_RESOURCE = cls
-        return cls
+        cls._CHILD_CLS = child_cls
+        return child_cls
 
 
 class Root(Branch):

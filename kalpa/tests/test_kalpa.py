@@ -22,6 +22,27 @@ def basic_tree():
         'leaf_cls': Leaf}
 
 
+@pytest.fixture
+def branching_tree():
+    class Root(kalpa.Root):
+        pass
+
+    @Root.attach('objects')
+    class Collection(kalpa.Branch):
+        def __getitem__(self, path):
+            return self._sprout(path, fruit='apple', twice=path * 2)
+
+    @Collection.child_resource
+    class Object(kalpa.Leaf):
+        pass
+
+    return {
+        'root': Root(None),
+        'root_cls': Root,
+        'collection_cls': Collection,
+        'object_cls': Object}
+
+
 class TestBasicResource(object):
     def test_sub_resource_type(self, basic_tree):
         """Leaf is an instance of the Leaf class, for context selection."""
@@ -57,3 +78,18 @@ class TestBasicResource(object):
         first = root['leaf']
         second = root['leaf']
         assert first is second
+
+
+class TestBranchingResource(object):
+    def test_loaded_object_type(self, branching_tree):
+        """Object from collection is of Object class, for context selection."""
+        root = branching_tree['root']
+        leaf = root['objects']['any']
+        assert isinstance(leaf, branching_tree['object_cls'])
+
+    def test_object_lineage(self, branching_tree):
+        """Objects from collection is in lineage of Root and Collection."""
+        root = branching_tree['root']
+        leaf = root['objects']['any']
+        assert location.inside(leaf, root)
+        assert location.inside(leaf, root['objects'])
