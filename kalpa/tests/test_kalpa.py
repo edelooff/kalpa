@@ -12,7 +12,7 @@ def basic_tree():
     class Root(kalpa.Root):
         pass
 
-    @Root.attach('leaf')
+    @Root.attach('leaf', aliases=['foliage', 'leaves'])
     class Leaf(kalpa.Leaf):
         pass
 
@@ -78,6 +78,32 @@ class TestBasicResource(object):
         first = root['leaf']
         second = root['leaf']
         assert first is second
+
+
+class TestBranchAliasing(object):
+    def test_alias_access(self, basic_tree):
+        """Accessing the sub-resource using aliased names gives resource."""
+        root = basic_tree['root']
+        assert isinstance(root['foliage'], basic_tree['leaf_cls'])
+        assert isinstance(root['leaves'], basic_tree['leaf_cls'])
+
+    def test_alias_resouce_caching(self, basic_tree):
+        """Aliased resources are cached similarly to primary resources."""
+        root = basic_tree['root']
+        alias_one = root['foliage']
+        alias_two = root['leaves']
+        assert alias_one is root['foliage']
+        assert alias_two is root['leaves']
+
+    def test_alias_are_separate_instances(self, basic_tree):
+        """Aliased resources are their own separate instances."""
+        root = basic_tree['root']
+        primary = root['leaf']
+        alias_one = root['foliage']
+        alias_two = root['leaves']
+        assert primary is not alias_one
+        assert primary is not alias_two
+        assert alias_one is not alias_two
 
 
 class TestBranchingResource(object):
