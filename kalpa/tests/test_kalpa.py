@@ -33,7 +33,11 @@ def branching_tree():
             return self._sprout(path, fruit='apple', twice=path * 2)
 
     @Collection.child_resource
-    class Object(kalpa.Leaf):
+    class Object(kalpa.Branch):
+        pass
+
+    @Object.attach('votes')
+    class Votes(kalpa.Leaf):
         pass
 
     return {
@@ -124,3 +128,43 @@ class TestBranchingResource(object):
         """Retrieving the same object twice should provide the same one."""
         root = branching_tree['root']
         assert root['objects']['leaf'] is root['objects']['leaf']
+
+
+class TestAttributeAccess(object):
+    def test_simple_attribute_access(self, branching_tree):
+        """Keywords given for object creation are available as attributes."""
+        root = branching_tree['root']
+        pie = root['objects']['pie']
+        assert pie.fruit == 'apple'
+        assert pie.twice == 'piepie'
+
+    def test_delegated_attribute_access(self, branching_tree):
+        """Attributes access searches up along lineage for requested attr."""
+        root = branching_tree['root']
+        person = root['objects']['bob']
+        votes = person['votes']
+        assert votes.fruit == person.fruit
+        assert votes.fruit == 'apple'
+
+    def test_attribute_cached_access(self, branching_tree):
+        """Accessing parented attribute places it on local object."""
+        root = branching_tree['root']
+        votes = root['objects'][21]['votes']
+        assert 'twice' not in vars(votes)
+        assert votes.twice == 42
+        assert 'twice' in vars(votes)
+
+    def test_only_delegate_initial_attributes(self, branching_tree):
+        """Only attributes provided during resource created are delegated."""
+        root = branching_tree['root']
+        leaf = root['objects']['leaf']
+        leaf.name = 'example'
+        with pytest.raises(AttributeError):
+            leaf['votes'].name
+
+    def test_only_delegate_initial_attribute_values(self, branching_tree):
+        """Only the initial values of attributes are delegated."""
+        root = branching_tree['root']
+        leaf = root['objects']['leaf']
+        leaf.fruit = 'pear'
+        assert leaf['votes'].fruit == 'apple'
