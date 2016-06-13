@@ -8,7 +8,13 @@ import kalpa
 
 @pytest.fixture
 def basic_tree():
-    """A simple root resource with a single static sub-resource."""
+    """A simple root resource with a single static sub-resource.
+
+    This implicitly tests the following components:
+
+        - Static resource class attachment
+        - Aliased resource attachment
+    """
     class Root(kalpa.Root):
         pass
 
@@ -24,6 +30,15 @@ def basic_tree():
 
 @pytest.fixture
 def branching_tree():
+    """Returns a resource tree which is used for dynamic resource loading.
+
+    This implicitly tests the following parts of kalpa:
+
+        - Static resource class attachment
+        - Child resource assignment to Branch classes
+        - Child resource creation using the registered class
+        - Child resource creation using a specified class
+    """
     class Root(kalpa.Root):
         pass
 
@@ -31,6 +46,11 @@ def branching_tree():
     class Collection(kalpa.Branch):
         def __getitem__(self, path):
             return self._sprout(path, fruit='apple', twice=path * 2)
+
+    @Root.attach('people')
+    class People(kalpa.Branch):
+        def __getitem__(self, path):
+            return self._sprout_resource(Person, path, first=path[0].upper())
 
     @Collection.child_resource
     class Object(kalpa.Branch):
@@ -40,11 +60,16 @@ def branching_tree():
     class Votes(kalpa.Leaf):
         pass
 
+    class Person(kalpa.Leaf):
+        pass
+
     return {
         'root': Root(None),
         'root_cls': Root,
         'collection_cls': Collection,
-        'object_cls': Object}
+        'object_cls': Object,
+        'people_cls': People,
+        'person_cls': Person}
 
 
 class TestBasicResource(object):
@@ -112,10 +137,16 @@ class TestBranchAliasing(object):
 
 class TestBranchingResource(object):
     def test_loaded_object_type(self, branching_tree):
-        """Object from collection is of Object class, for context selection."""
+        """Child from 'collection' is of Object class (context selection)."""
         root = branching_tree['root']
         leaf = root['objects']['any']
         assert isinstance(leaf, branching_tree['object_cls'])
+
+    def test_alternate_loaded_object_type(self, branching_tree):
+        """Child from 'people' is of Person class (context selection)."""
+        root = branching_tree['root']
+        leaf = root['people']['alice']
+        assert isinstance(leaf, branching_tree['person_cls'])
 
     def test_object_lineage(self, branching_tree):
         """Objects from collection is in lineage of Root and Collection."""
@@ -124,10 +155,22 @@ class TestBranchingResource(object):
         assert location.inside(leaf, root)
         assert location.inside(leaf, root['objects'])
 
+    def test_alternate_object_lineage(self, branching_tree):
+        """Objects from collection is in lineage of Root and Collection."""
+        root = branching_tree['root']
+        leaf = root['people']['bob']
+        assert location.inside(leaf, root)
+        assert location.inside(leaf, root['people'])
+
     def test_object_caching(self, branching_tree):
         """Retrieving the same object twice should provide the same one."""
         root = branching_tree['root']
         assert root['objects']['leaf'] is root['objects']['leaf']
+
+    def test_alternate_object_caching(self, branching_tree):
+        """Retrieving the same object twice should provide the same one."""
+        root = branching_tree['root']
+        assert root['people']['eve'] is root['people']['eve']
 
 
 class TestAttributeAccess(object):
@@ -168,3 +211,9 @@ class TestAttributeAccess(object):
         leaf = root['objects']['leaf']
         leaf.fruit = 'pear'
         assert leaf['votes'].fruit == 'apple'
+
+    def test_attributes_for_custom_children(self, branching_tree):
+        """Children created by manual resource selection have same attrs."""
+        root = branching_tree['root']
+        assert root['people']['emily'].first == 'E'
+        assert root['people']['peter'].first == 'P'
