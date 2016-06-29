@@ -44,12 +44,12 @@ def branching_tree():
 
     @Root.attach('objects')
     class Collection(kalpa.Branch):
-        def __getitem__(self, path):
+        def __load__(self, path):
             return self._sprout(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
     class People(kalpa.Branch):
-        def __getitem__(self, path):
+        def __load__(self, path):
             return self._sprout_resource(Person, path, first=path[0].upper())
 
     @Collection.child_resource
