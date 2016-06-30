@@ -11,7 +11,7 @@ README = open(os.path.join(HERE, 'README.rst')).read()
 
 setup(
     name='kalpa',
-    version='0.1',
+    version='0.2',
     author='Elmer de Looff',
     author_email='elmer.delooff@gmail.com',
     description='Resource baseclasses for traversal in Pyramid ',
@@ -19,7 +19,7 @@ setup(
     url='http://variable-scope.com',
     keywords='pyramid traversal resource helper',
     classifiers=[
-        'Development Status :: 2 - Pre-Alpha',
+        'Development Status :: 2 - Alpha',
         'Framework :: Pyramid',
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
