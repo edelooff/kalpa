@@ -28,6 +28,7 @@ setup(
     packages=find_packages(),
     include_package_data=True,
     zip_safe=False,
-    tests_require=[
-        'pytest']
+    extras_require={
+        'test': ['pyramid', 'pytest-runner', 'pytest']
+    },
 )
