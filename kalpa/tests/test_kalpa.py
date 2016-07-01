@@ -1,13 +1,30 @@
-#!/usr/bin/python
-
 import pytest
 from pyramid import location
 
-import kalpa
+
+@pytest.fixture
+def kalpa_root():
+    """Imports and returns kalpa Root class."""
+    from kalpa import Root
+    return Root
 
 
 @pytest.fixture
-def basic_tree():
+def kalpa_branch():
+    """Imports and returns kalpa Branch class."""
+    from kalpa import Branch
+    return Branch
+
+
+@pytest.fixture
+def kalpa_leaf():
+    """Imports and returns kalpa Leaf class."""
+    from kalpa import Leaf
+    return Leaf
+
+
+@pytest.fixture
+def basic_tree(kalpa_root, kalpa_leaf):
     """A simple root resource with a single static sub-resource.
 
     This implicitly tests the following components:
@@ -15,11 +32,11 @@ def basic_tree():
         - Static resource class attachment
         - Aliased resource attachment
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         pass
 
     @Root.attach('leaf', aliases=['foliage', 'leaves'])
-    class Leaf(kalpa.Leaf):
+    class Leaf(kalpa_leaf):
         pass
 
     return {
@@ -29,7 +46,7 @@ def basic_tree():
 
 
 @pytest.fixture
-def branching_tree():
+def branching_tree(kalpa_root, kalpa_branch, kalpa_leaf):
     """Returns a resource tree which is used for dynamic resource loading.
 
     This implicitly tests the following parts of kalpa:
@@ -39,28 +56,28 @@ def branching_tree():
         - Child resource creation using the registered class
         - Child resource creation using a specified class
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         pass
 
     @Root.attach('objects')
-    class Collection(kalpa.Branch):
+    class Collection(kalpa_branch):
         def __load__(self, path):
             return self._sprout(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
-    class People(kalpa.Branch):
+    class People(kalpa_branch):
         def __load__(self, path):
             return self._sprout_resource(Person, path, first=path[0].upper())
 
     @Collection.child_resource
-    class Object(kalpa.Branch):
+    class Object(kalpa_branch):
         pass
 
     @Object.attach('votes')
-    class Votes(kalpa.Leaf):
+    class Votes(kalpa_leaf):
         pass
 
-    class Person(kalpa.Leaf):
+    class Person(kalpa_leaf):
         pass
 
     return {
@@ -73,7 +90,7 @@ def branching_tree():
 
 
 @pytest.fixture
-def mixed_tree():
+def mixed_tree(kalpa_root, kalpa_leaf):
     """Returns a resource tree which has mixed resource loading.
 
     This implicitly tests the following parts of kalpa:
@@ -82,17 +99,17 @@ def mixed_tree():
         - Child resource assignment to Branch classes
         - Child resource creation using the registered class
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         def __load__(self, path):
             return self._sprout(path)
 
     @Root.attach('spam')
     @Root.attach('eggs')
-    class Static(kalpa.Leaf):
+    class Static(kalpa_leaf):
         pass
 
     @Root.child_resource
-    class Dynamic(kalpa.Leaf):
+    class Dynamic(kalpa_leaf):
         pass
 
     return {
