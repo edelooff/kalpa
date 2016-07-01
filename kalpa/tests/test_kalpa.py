@@ -1,5 +1,4 @@
 import pytest
-from pyramid import location
 
 
 @pytest.fixture
@@ -21,6 +20,13 @@ def kalpa_leaf():
     """Imports and returns kalpa Leaf class."""
     from kalpa import Leaf
     return Leaf
+
+
+@pytest.fixture
+def location_inside():
+    """Imports and returns `inside` function from Pyramid's location module."""
+    from pyramid.location import inside
+    return inside
 
 
 @pytest.fixture
@@ -126,11 +132,11 @@ class TestBasicResource(object):
         leaf = root['leaf']
         assert isinstance(leaf, basic_tree['leaf_cls'])
 
-    def test_sub_resource_lineage(self, basic_tree):
+    def test_sub_resource_lineage(self, basic_tree, location_inside):
         """Leaf is a child resource of Root according to Pyramid lineage."""
         root = basic_tree['root']
         leaf = root['leaf']
-        assert location.inside(leaf, root)
+        assert location_inside(leaf, root)
 
     def test_keyerror_for_nonexistant_sub_resource(self, basic_tree):
         root = basic_tree['root']
@@ -195,19 +201,19 @@ class TestBranchingResource(object):
         leaf = root['people']['alice']
         assert isinstance(leaf, branching_tree['person_cls'])
 
-    def test_object_lineage(self, branching_tree):
+    def test_object_lineage(self, branching_tree, location_inside):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['objects']['any']
-        assert location.inside(leaf, root)
-        assert location.inside(leaf, root['objects'])
+        assert location_inside(leaf, root)
+        assert location_inside(leaf, root['objects'])
 
-    def test_alternate_object_lineage(self, branching_tree):
+    def test_alternate_object_lineage(self, branching_tree, location_inside):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['people']['bob']
-        assert location.inside(leaf, root)
-        assert location.inside(leaf, root['people'])
+        assert location_inside(leaf, root)
+        assert location_inside(leaf, root['people'])
 
     def test_object_caching(self, branching_tree):
         """Retrieving the same object twice should provide the same one."""
