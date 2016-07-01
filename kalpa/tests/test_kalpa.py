@@ -44,12 +44,12 @@ def branching_tree():
 
     @Root.attach('objects')
     class Collection(kalpa.Branch):
-        def __getitem__(self, path):
+        def __load__(self, path):
             return self._sprout(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
     class People(kalpa.Branch):
-        def __getitem__(self, path):
+        def __load__(self, path):
             return self._sprout_resource(Person, path, first=path[0].upper())
 
     @Collection.child_resource
@@ -70,6 +70,36 @@ def branching_tree():
         'object_cls': Object,
         'people_cls': People,
         'person_cls': Person}
+
+
+@pytest.fixture
+def mixed_tree():
+    """Returns a resource tree which has mixed resource loading.
+
+    This implicitly tests the following parts of kalpa:
+
+        - Static resource class attachment
+        - Child resource assignment to Branch classes
+        - Child resource creation using the registered class
+    """
+    class Root(kalpa.Root):
+        def __load__(self, path):
+            return self._sprout(path)
+
+    @Root.attach('spam')
+    @Root.attach('eggs')
+    class Static(kalpa.Leaf):
+        pass
+
+    @Root.child_resource
+    class Dynamic(kalpa.Leaf):
+        pass
+
+    return {
+        'root': Root(None),
+        'root_cls': Root,
+        'dynamic_cls': Dynamic,
+        'static_cls': Static}
 
 
 class TestBasicResource(object):
@@ -171,6 +201,20 @@ class TestBranchingResource(object):
         """Retrieving the same object twice should provide the same one."""
         root = branching_tree['root']
         assert root['people']['eve'] is root['people']['eve']
+
+
+class TestMixedResource(object):
+    def test_static_resource_load(self, mixed_tree):
+        """Retrieves a statically attached resource from the tree."""
+        root = mixed_tree['root']
+        assert isinstance(root['spam'], mixed_tree['static_cls'])
+        assert isinstance(root['eggs'], mixed_tree['static_cls'])
+
+    def test_dynamic_resource_load(self, mixed_tree):
+        """Retrieves a resource from the tree through __load__."""
+        root = mixed_tree['root']
+        assert isinstance(root['ham'], mixed_tree['dynamic_cls'])
+        assert isinstance(root['bacon'], mixed_tree['dynamic_cls'])
 
 
 class TestAttributeAccess(object):

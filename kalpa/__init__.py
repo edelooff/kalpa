@@ -45,42 +45,40 @@ class Branch(Leaf):
         return path in self.__children__
 
     def __getitem__(self, path):
-        """Return the requested child instance or raise KeyError."""
-        if self._SUBPATHS is None:
-            raise KeyError(path)
-        resource_class, name = self._SUBPATHS[path]
-        return self._create_or_load_child(resource_class, path, name)
+        """Returns a cached child resource or returns a newly created one.
+
+        If the requested path is in the cache, the cached value is returned.
+        Failing that, a check is done for statically attached resources. If one
+        is found, it's instantiated, cached, and returned.
+
+        A final attempt to load a resource is made by calling out to __load__.
+        If this succeeds, the result is cached and returned.
+        """
+        if path in self.__children__:
+            return self.__children__[path]
+        if self._SUBPATHS is not None and path in self._SUBPATHS:
+            resource_class, name = self._SUBPATHS[path]
+            resource = self.__children__[path] = resource_class(name, self)
+            return resource
+        resource = self.__children__[path] = self.__load__(path)
+        return resource
+
+    def __load__(self, path):
+        """Dynamic resource loader for custom Branch classes.
+
+        This method should either raise a KeyError or return an instantiated
+        resource class. Through one of _sprout(), _sprout_resource() or manual
+        instantiation. The response will be cached by the caller, __getitem__.
+        """
+        raise KeyError(path)
 
     def _sprout(self, _name, **attrs):
-        """Creates and returns a child resource of the type registered."""
-        return self._create_or_load_child(
-            self._CHILD_CLS, _name, _name, attrs=attrs)
+        """Returns a child resource of the registered type."""
+        return self._CHILD_CLS(_name, self, **attrs)
 
     def _sprout_resource(self, _resource_cls, _name, **attrs):
-        """Adds a child resource of the provided type, with given name."""
-        return self._create_or_load_child(
-            _resource_cls, _name, _name, attrs=attrs)
-
-    def _create_or_load_child(self, resource_cls, path, name, attrs=None):
-        """Returns a child resource from a path or adds it there.
-
-        If a resource already exists on the provided path, this resource will
-        always be returned (regardless of type, name and attributes).
-
-        If a resource could not be loaded from the provided path, a new one
-        is created from the provided resource class, name and attributes.
-
-        After creation, the resource is added to the __children__ cache for
-        future retrieval, ensuring consistent resource lineage.
-        """
-        try:
-            return self.__children__[path]
-        except KeyError:
-            if attrs is None:
-                attrs = {}
-            resource = resource_cls(name, self, **attrs)
-            self.__children__[path] = resource
-            return resource
+        """Returns a child resource of the provided type, with given name."""
+        return _resource_cls(_name, self, **attrs)
 
     @classmethod
     def attach(cls, canonical_path, aliases=()):

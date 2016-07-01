@@ -2,21 +2,27 @@ Kalpa
 #####
 
 Kalpa provides a starting point for resource traversal in Pyramid. It provides
-two classes for this, a `Branch` and a `Leaf`, which allow you to create
-arbitrary resource trees without the boilerplate.
+two classes for this, a :code:`Branch` and a :code:`Leaf`, which allow you to
+create arbitrary resource trees without the boilerplate.
+
+There is also a :code:`Root` class for added convenience that accepts a
+request during initialization. This can be used to create a starting point for
+Pyramid's traversal.
 
 .. code-block:: python
 
     from kalpa import Root, Branch, Leaf
 
-    from . import model
+    USERS = {...}
+
 
     @Root.attach('users')
     class UserCollection(Branch):
-        """User collection, for listings or loading specific ones."""
-        def __getitem__(self, key):
-            # Load user with SQLAlchemy session available on request
-            user = self.request.db.query(model.User).get(key)
+        """User collection, for listings, or loading single users."""
+
+        def __load__(self, path):
+            """Return child resource with requested user included."""
+            user = USERS[path]  # Load user or raise KeyError.
             return self._sprout(key, user=user)
 
 
@@ -25,6 +31,9 @@ arbitrary resource trees without the boilerplate.
         """User resource, a single loaded user."""
 
 
-    @User.attach('images')
-    class UserImageCollection(Leaf):
-        """Collection of images posted by a user."""
+    @User.attach('gallery', aliases=['images'])
+    class UserGallery(Leaf):
+        """Gallery of images posted by a user.
+
+        Reachable as `/users/:id/gallery` but also `/users/:id/images`.
+        """
