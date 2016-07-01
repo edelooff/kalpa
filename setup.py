@@ -5,8 +5,11 @@ from setuptools import (
     find_packages,
     setup)
 
-HERE = os.path.abspath(os.path.dirname(__file__))
-README = open(os.path.join(HERE, 'README.rst')).read()
+
+def contents(filename):
+    here = os.path.abspath(os.path.dirname(__file__))
+    with open(os.path.join(here, filename)) as fp:
+        return fp.read()
 
 
 setup(
@@ -15,7 +18,7 @@ setup(
     author='Elmer de Looff',
     author_email='elmer.delooff@gmail.com',
     description='Resource baseclasses for traversal in Pyramid ',
-    long_description=README,
+    long_description=contents('README.rst'),
     url='http://variable-scope.com',
     keywords='pyramid traversal resource helper',
     classifiers=[
