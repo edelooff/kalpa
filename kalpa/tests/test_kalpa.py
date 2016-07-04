@@ -1,13 +1,36 @@
-#!/usr/bin/python
-
 import pytest
-from pyramid import location
-
-import kalpa
 
 
 @pytest.fixture
-def basic_tree():
+def kalpa_root():
+    """Imports and returns kalpa Root class."""
+    from kalpa import Root
+    return Root
+
+
+@pytest.fixture
+def kalpa_branch():
+    """Imports and returns kalpa Branch class."""
+    from kalpa import Branch
+    return Branch
+
+
+@pytest.fixture
+def kalpa_leaf():
+    """Imports and returns kalpa Leaf class."""
+    from kalpa import Leaf
+    return Leaf
+
+
+@pytest.fixture
+def location_inside():
+    """Imports and returns `inside` function from Pyramid's location module."""
+    from pyramid.location import inside
+    return inside
+
+
+@pytest.fixture
+def basic_tree(kalpa_root, kalpa_leaf):
     """A simple root resource with a single static sub-resource.
 
     This implicitly tests the following components:
@@ -15,11 +38,11 @@ def basic_tree():
         - Static resource class attachment
         - Aliased resource attachment
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         pass
 
     @Root.attach('leaf', aliases=['foliage', 'leaves'])
-    class Leaf(kalpa.Leaf):
+    class Leaf(kalpa_leaf):
         pass
 
     return {
@@ -29,7 +52,7 @@ def basic_tree():
 
 
 @pytest.fixture
-def branching_tree():
+def branching_tree(kalpa_root, kalpa_branch, kalpa_leaf):
     """Returns a resource tree which is used for dynamic resource loading.
 
     This implicitly tests the following parts of kalpa:
@@ -39,28 +62,28 @@ def branching_tree():
         - Child resource creation using the registered class
         - Child resource creation using a specified class
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         pass
 
     @Root.attach('objects')
-    class Collection(kalpa.Branch):
+    class Collection(kalpa_branch):
         def __load__(self, path):
             return self._sprout(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
-    class People(kalpa.Branch):
+    class People(kalpa_branch):
         def __load__(self, path):
             return self._sprout_resource(Person, path, first=path[0].upper())
 
     @Collection.child_resource
-    class Object(kalpa.Branch):
+    class Object(kalpa_branch):
         pass
 
     @Object.attach('votes')
-    class Votes(kalpa.Leaf):
+    class Votes(kalpa_leaf):
         pass
 
-    class Person(kalpa.Leaf):
+    class Person(kalpa_leaf):
         pass
 
     return {
@@ -73,7 +96,7 @@ def branching_tree():
 
 
 @pytest.fixture
-def mixed_tree():
+def mixed_tree(kalpa_root, kalpa_leaf):
     """Returns a resource tree which has mixed resource loading.
 
     This implicitly tests the following parts of kalpa:
@@ -82,17 +105,17 @@ def mixed_tree():
         - Child resource assignment to Branch classes
         - Child resource creation using the registered class
     """
-    class Root(kalpa.Root):
+    class Root(kalpa_root):
         def __load__(self, path):
             return self._sprout(path)
 
     @Root.attach('spam')
     @Root.attach('eggs')
-    class Static(kalpa.Leaf):
+    class Static(kalpa_leaf):
         pass
 
     @Root.child_resource
-    class Dynamic(kalpa.Leaf):
+    class Dynamic(kalpa_leaf):
         pass
 
     return {
@@ -109,11 +132,11 @@ class TestBasicResource(object):
         leaf = root['leaf']
         assert isinstance(leaf, basic_tree['leaf_cls'])
 
-    def test_sub_resource_lineage(self, basic_tree):
+    def test_sub_resource_lineage(self, basic_tree, location_inside):
         """Leaf is a child resource of Root according to Pyramid lineage."""
         root = basic_tree['root']
         leaf = root['leaf']
-        assert location.inside(leaf, root)
+        assert location_inside(leaf, root)
 
     def test_keyerror_for_nonexistant_sub_resource(self, basic_tree):
         root = basic_tree['root']
@@ -178,19 +201,19 @@ class TestBranchingResource(object):
         leaf = root['people']['alice']
         assert isinstance(leaf, branching_tree['person_cls'])
 
-    def test_object_lineage(self, branching_tree):
+    def test_object_lineage(self, branching_tree, location_inside):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['objects']['any']
-        assert location.inside(leaf, root)
-        assert location.inside(leaf, root['objects'])
+        assert location_inside(leaf, root)
+        assert location_inside(leaf, root['objects'])
 
-    def test_alternate_object_lineage(self, branching_tree):
+    def test_alternate_object_lineage(self, branching_tree, location_inside):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['people']['bob']
-        assert location.inside(leaf, root)
-        assert location.inside(leaf, root['people'])
+        assert location_inside(leaf, root)
+        assert location_inside(leaf, root['people'])
 
     def test_object_caching(self, branching_tree):
         """Retrieving the same object twice should provide the same one."""
