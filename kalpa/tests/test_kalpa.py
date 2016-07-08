@@ -30,6 +30,13 @@ def location_inside():
 
 
 @pytest.fixture
+def traversal():
+    """Imports and returns `traversal` module from Pyramid."""
+    from pyramid import traversal
+    return traversal
+
+
+@pytest.fixture
 def basic_tree(kalpa_root, kalpa_leaf):
     """A simple root resource with a single static sub-resource.
 
@@ -284,3 +291,36 @@ class TestAttributeAccess(object):
         root = branching_tree['root']
         assert root['people']['emily'].first == 'E'
         assert root['people']['peter'].first == 'P'
+
+
+class TestPyramidTraversalIntegration(object):
+    def test_find_root(self, branching_tree, traversal):
+        """For a given resource, Pyramid can find its root."""
+        root = branching_tree['root']
+        assert traversal.find_root(root) == root
+        assert traversal.find_root(root['people']['alice']) == root
+        assert traversal.find_root(root['objects']['egg']['votes']) == root
+
+    def test_find_resource(self, branching_tree, traversal):
+        """Resolving paths yields the expected resource."""
+        root = branching_tree['root']
+        bob = root['people']['bob']
+        pvotes = root['objects']['peach']['votes']
+        assert traversal.find_resource(root, '/') == root
+        assert traversal.find_resource(root, '/people/bob') == bob
+        assert traversal.find_resource(root, '/objects/peach/votes') == pvotes
+
+    def test_resource_path(self, branching_tree, traversal):
+        """Resources generate the expected path."""
+        root = branching_tree['root']
+        person_eve = root['people']['eve']
+        votes_pear = root['objects']['pear']['votes']
+        assert traversal.resource_path(person_eve) == '/people/eve'
+        assert traversal.resource_path(votes_pear) == '/objects/pear/votes'
+
+    def test_resource_path_aliased(self, basic_tree, traversal):
+        """Finds a resource by its aliases and verifies the canonical path."""
+        root = basic_tree['root']
+        for path in ('leaf', 'leaves', 'foliage'):
+            resource = traversal.find_resource(root, (path,))
+            assert traversal.resource_path(resource) == '/leaf'
