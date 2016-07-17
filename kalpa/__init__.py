@@ -49,10 +49,6 @@ class Branch(with_metaclass(BranchType, Leaf)):
         super(Branch, self).__init__(_name, _parent, **attributes)
         self.__children__ = {}
 
-    def __contains__(self, path):
-        """Returns whether or not the provided path is in the child cache."""
-        return path in self.__children__
-
     def __getitem__(self, path):
         """Returns a cached child resource or returns a newly created one.
 

@@ -150,17 +150,6 @@ class TestBasicResource(object):
         with pytest.raises(KeyError):
             root['nonexistant']
 
-    def test_contains_false_before_access(self, basic_tree):
-        """Before accessing the leaf, the root has no child by that name."""
-        root = basic_tree['root']
-        assert 'leaf' not in root
-
-    def test_contains_true_after_access(self, basic_tree):
-        """After accessing the leaf, the root has a child by that name."""
-        root = basic_tree['root']
-        root['leaf']
-        assert 'leaf' in root
-
     def test_multiple_lookups_same_resource(self, basic_tree):
         """Looking up the same sub-resource twice gives the same instance."""
         root = basic_tree['root']
