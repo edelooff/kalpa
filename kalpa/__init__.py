@@ -92,12 +92,9 @@ class Branch(with_metaclass(BranchType, Leaf)):
     @classmethod
     def attach(cls, canonical_path, aliases=()):
         """Adds a resource as the child of another resource."""
-        paths = [canonical_path]
-        paths.extend(aliases)
-
         def _attach_resource(child_cls):
             """Stores the sub-resource on all relevant paths."""
-            for path in paths:
+            for path in [canonical_path] + list(aliases):
                 cls._SUBPATHS[path] = child_cls, canonical_path
             return child_cls
         return _attach_resource
