@@ -1,9 +1,7 @@
 #!/usr/bin/python
 
 import os
-from setuptools import (
-    find_packages,
-    setup)
+from setuptools import setup, find_packages
 
 
 def contents(filename):
@@ -15,6 +13,7 @@ def contents(filename):
 setup(
     name='kalpa',
     version='0.2',
+    packages=find_packages(),
     author='Elmer de Looff',
     author_email='elmer.delooff@gmail.com',
     description='Resource baseclasses for traversal in Pyramid ',
@@ -28,9 +27,8 @@ setup(
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
         'Topic :: Internet :: WWW/HTTP'],
-    packages=find_packages(),
-    include_package_data=True,
     zip_safe=False,
+    install_requires=['six'],
     extras_require={
         'test': ['pyramid', 'pytest-runner', 'pytest']
     },
