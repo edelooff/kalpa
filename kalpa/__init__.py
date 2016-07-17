@@ -1,6 +1,8 @@
 """Kalpa provides base classes for Pyramid's traversal mechanism."""
 
-from six import iteritems
+from six import (
+    iteritems,
+    with_metaclass)
 
 
 class Leaf(object):
@@ -33,11 +35,16 @@ class Leaf(object):
         return '<{}>'.format(type(self).__name__)
 
 
-class Branch(Leaf):
-    """Base resource class for a branch, extends Leaf."""
-    _CHILD_CLS = None
-    _SUBPATHS = None
+class BranchType(type):
+    """Provide each class with its own unshared subpath registry."""
+    def __init__(cls, name, bases, namespace):
+        super(BranchType, cls).__init__(name, bases, namespace)
+        cls._CHILD_CLS = None
+        cls._SUBPATHS = {}
 
+
+class Branch(with_metaclass(BranchType, Leaf)):
+    """Base resource class for a branch, extends Leaf."""
     def __init__(self, _name, _parent, **attributes):
         super(Branch, self).__init__(_name, _parent, **attributes)
         self.__children__ = {}
@@ -85,14 +92,9 @@ class Branch(Leaf):
     @classmethod
     def attach(cls, canonical_path, aliases=()):
         """Adds a resource as the child of another resource."""
-        if cls._SUBPATHS is None:
-            cls._SUBPATHS = {}
-        paths = [canonical_path]
-        paths.extend(aliases)
-
         def _attach_resource(child_cls):
             """Stores the sub-resource on all relevant paths."""
-            for path in paths:
+            for path in [canonical_path] + list(aliases):
                 cls._SUBPATHS[path] = child_cls, canonical_path
             return child_cls
         return _attach_resource
