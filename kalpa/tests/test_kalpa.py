@@ -324,3 +324,9 @@ class TestPyramidTraversalIntegration(object):
         for path in ('leaf', 'leaves', 'foliage'):
             resource = traversal.find_resource(root, (path,))
             assert traversal.resource_path(resource) == '/leaf'
+
+
+def test_separate_subpath_registries(basic_tree, branching_tree):
+    basic_root = basic_tree['root_cls']
+    branching_root = branching_tree['root_cls']
+    assert basic_root._SUBPATHS is not branching_root._SUBPATHS
