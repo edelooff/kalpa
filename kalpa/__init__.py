@@ -1,5 +1,7 @@
 """Kalpa provides base classes for Pyramid's traversal mechanism."""
 
+from six import iteritems
+
 
 class Leaf(object):
     """Base resource class for an end-node."""
@@ -7,7 +9,7 @@ class Leaf(object):
         self.__name__ = _name
         self.__parent__ = _parent
         self.__attributes__ = attributes
-        for attr, value in attributes.iteritems():
+        for attr, value in iteritems(attributes):
             setattr(self, attr, value)
 
     def __getattr__(self, attr):
