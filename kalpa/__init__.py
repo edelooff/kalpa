@@ -26,8 +26,7 @@ class Leaf(object):
         """
         for resource in lineage(self):
             if attr in resource.__attributes__:
-                value = resource.__attributes__[attr]
-                setattr(self, attr, value)
+                value = self.__dict__[attr] = resource.__attributes__[attr]
                 return value
         raise AttributeError(
             '{!r} object has no attribute {!r}'.format(self, attr))
