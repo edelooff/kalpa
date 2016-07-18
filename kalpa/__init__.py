@@ -4,6 +4,8 @@ from six import (
     iteritems,
     with_metaclass)
 
+from .util import memoize
+
 
 class Leaf(object):
     """Base resource class for an end-node."""
@@ -45,14 +47,8 @@ class BranchType(type):
 
 class Branch(with_metaclass(BranchType, Leaf)):
     """Base resource class for a branch, extends Leaf."""
-    def __init__(self, _name, _parent, **attributes):
-        super(Branch, self).__init__(_name, _parent, **attributes)
-        self.__children__ = {}
 
-    def __contains__(self, path):
-        """Returns whether or not the provided path is in the child cache."""
-        return path in self.__children__
-
+    @memoize
     def __getitem__(self, path):
         """Returns a cached child resource or returns a newly created one.
 
@@ -63,14 +59,10 @@ class Branch(with_metaclass(BranchType, Leaf)):
         A final attempt to load a resource is made by calling out to __load__.
         If this succeeds, the result is cached and returned.
         """
-        if path in self.__children__:
-            return self.__children__[path]
         if self._SUBPATHS is not None and path in self._SUBPATHS:
             resource_class, name = self._SUBPATHS[path]
-            resource = self.__children__[path] = resource_class(name, self)
-            return resource
-        resource = self.__children__[path] = self.__load__(path)
-        return resource
+            return resource_class(name, self)
+        return self.__load__(path)
 
     def __load__(self, path):
         """Dynamic resource loader for custom Branch classes.
