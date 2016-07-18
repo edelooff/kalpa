@@ -3,6 +3,17 @@
 import functools
 
 
+def lineage(resource):
+    """Yields the resource's lineage up to the root.
+
+    This is a copy of Pyramid's lineage function to reduce dependencies.
+    It assumes that parent resources are correctly set (which kalpa does).
+    """
+    while resource is not None:
+        yield resource
+        resource = resource.__parent__
+
+
 def memoize(wrapped):
     """Caches values returned by method, storing a cache on the instance.
 

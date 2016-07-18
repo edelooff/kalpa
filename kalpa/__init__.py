@@ -4,7 +4,9 @@ from six import (
     iteritems,
     with_metaclass)
 
-from .util import memoize
+from .util import (
+    lineage,
+    memoize)
 
 
 class Leaf(object):
@@ -22,13 +24,11 @@ class Leaf(object):
         To prevent inadvertent method or private attribute access, only the
         optional keywords provided at initialization time are checked.
         """
-        resource = self.__parent__
-        while resource is not None:
+        for resource in lineage(self):
             if attr in resource.__attributes__:
                 value = resource.__attributes__[attr]
                 setattr(self, attr, value)
                 return value
-            resource = resource.__parent__
         raise AttributeError(
             '{!r} object has no attribute {!r}'.format(self, attr))
 
