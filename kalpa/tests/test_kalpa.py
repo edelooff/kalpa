@@ -327,6 +327,7 @@ class TestPyramidTraversalIntegration(object):
 
 
 def test_separate_subpath_registries(basic_tree, branching_tree):
+    """Verify that subpath registries are not shared between classes."""
     basic_root = basic_tree['root_cls']
     branching_root = branching_tree['root_cls']
     assert basic_root._SUBPATHS is not branching_root._SUBPATHS
