@@ -23,10 +23,17 @@ def kalpa_leaf():
 
 
 @pytest.fixture
-def location_inside():
-    """Imports and returns `inside` function from Pyramid's location module."""
-    from pyramid.location import inside
-    return inside
+def kalpa_util():
+    """Imports and returns the kalpa.util module."""
+    from kalpa import util
+    return util
+
+
+@pytest.fixture
+def location():
+    """Imports and returns `location` module from Pyramid."""
+    from pyramid import location
+    return location
 
 
 @pytest.fixture
@@ -139,11 +146,11 @@ class TestBasicResource(object):
         leaf = root['leaf']
         assert isinstance(leaf, basic_tree['leaf_cls'])
 
-    def test_sub_resource_lineage(self, basic_tree, location_inside):
+    def test_sub_resource_lineage(self, basic_tree, location):
         """Leaf is a child resource of Root according to Pyramid lineage."""
         root = basic_tree['root']
         leaf = root['leaf']
-        assert location_inside(leaf, root)
+        assert location.inside(leaf, root)
 
     def test_keyerror_for_nonexistant_sub_resource(self, basic_tree):
         root = basic_tree['root']
@@ -197,19 +204,19 @@ class TestBranchingResource(object):
         leaf = root['people']['alice']
         assert isinstance(leaf, branching_tree['person_cls'])
 
-    def test_object_lineage(self, branching_tree, location_inside):
+    def test_object_lineage(self, branching_tree, location):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['objects']['any']
-        assert location_inside(leaf, root)
-        assert location_inside(leaf, root['objects'])
+        assert location.inside(leaf, root)
+        assert location.inside(leaf, root['objects'])
 
-    def test_alternate_object_lineage(self, branching_tree, location_inside):
+    def test_alternate_object_lineage(self, branching_tree, location):
         """Objects from collection is in lineage of Root and Collection."""
         root = branching_tree['root']
         leaf = root['people']['bob']
-        assert location_inside(leaf, root)
-        assert location_inside(leaf, root['people'])
+        assert location.inside(leaf, root)
+        assert location.inside(leaf, root['people'])
 
     def test_object_caching(self, branching_tree):
         """Retrieving the same object twice should provide the same one."""
@@ -320,3 +327,9 @@ def test_separate_subpath_registries(basic_tree, branching_tree):
     basic_root = basic_tree['root_cls']
     branching_root = branching_tree['root_cls']
     assert basic_root._SUBPATHS is not branching_root._SUBPATHS
+
+
+def test_util_lineage(branching_tree, location, kalpa_util):
+    """Assures that kalpa's lineage function works similarly to Pyramid's."""
+    edmund = branching_tree['root']['people']['edmund']
+    assert list(location.lineage(edmund)) == list(kalpa_util.lineage(edmund))
