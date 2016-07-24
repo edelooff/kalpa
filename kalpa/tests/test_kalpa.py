@@ -333,3 +333,41 @@ def test_util_lineage(branching_tree, location, kalpa_util):
     """Assures that kalpa's lineage function works similarly to Pyramid's."""
     edmund = branching_tree['root']['people']['edmund']
     assert list(location.lineage(edmund)) == list(kalpa_util.lineage(edmund))
+
+
+def test_find_parent_by_class(branching_tree, kalpa_util):
+    """Finding a parent resource by its class or class name."""
+    root = branching_tree['root']
+    adam = root['people']['adam']
+    selectors_result_mapping = [
+        ((branching_tree['person_cls'], 'Person'), adam),
+        ((branching_tree['people_cls'], 'People'), root['people']),
+        ((branching_tree['root_cls'], 'Root'), root)]
+    for selectors, result in selectors_result_mapping:
+        for selector in selectors:
+            assert kalpa_util.parent_by_class(adam, selector) is result
+
+
+def test_find_parent_by_class_no_match(branching_tree, kalpa_util):
+    """If no parent matches the given class, finder raises LookupError."""
+    with pytest.raises(LookupError):
+        kalpa_util.parent_by_class(branching_tree['root'], object)
+    with pytest.raises(LookupError):
+        kalpa_util.parent_by_class(branching_tree['root'], 'Singleton')
+
+
+def test_find_parent_by_name(branching_tree, kalpa_util):
+    """Finding a parent resource by its resource name."""
+    root = branching_tree['root']
+    apple_votes = root['objects']['apple']['votes']
+    find_by_name = kalpa_util.parent_by_name
+    assert find_by_name(apple_votes, 'votes') is apple_votes
+    assert find_by_name(apple_votes, 'apple') is root['objects']['apple']
+    assert find_by_name(apple_votes, 'objects') is root['objects']
+    assert find_by_name(apple_votes, None) is root
+
+
+def test_find_parent_by_name_no_match(branching_tree, kalpa_util):
+    """If no parent matches the given name, finder raises LookupError."""
+    with pytest.raises(LookupError):
+        kalpa_util.parent_by_name(branching_tree['root'], 'olive')
