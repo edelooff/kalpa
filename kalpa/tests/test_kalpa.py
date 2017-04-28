@@ -44,12 +44,12 @@ def branching_tree():
     @Root.attach('objects')
     class Collection(Branch):
         def __load__(self, path):
-            return self._sprout(path, fruit='apple', twice=path * 2)
+            return self._child(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
     class People(Branch):
         def __load__(self, path):
-            return self._sprout_resource(Person, path, first=path[0].upper())
+            return self._child(Person, path, first=path[0].upper())
 
     @Collection.child_resource
     class Object(Branch):
@@ -85,7 +85,7 @@ def mixed_tree():
 
     class Root(Root):
         def __load__(self, path):
-            return self._sprout(path)
+            return self._child(path)
 
     @Root.attach('spam')
     @Root.attach('eggs')
