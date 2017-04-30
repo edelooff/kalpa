@@ -103,6 +103,43 @@ def mixed_tree():
         'static_cls': Static}
 
 
+@pytest.fixture
+def alternate_child_tree():
+    """Returns a resource tree where sub-resources can be of multiple types.
+
+    This implicitly tests the following parts of kalpa:
+
+        - Child resource assignment to Branch classes
+        - Child resource creation using the registered class
+    """
+    from kalpa import Root, Leaf
+
+    class Root(Root):
+        def __load__(self, name):
+            if name in ('adam', 'eve'):
+                return self._child(Admin, name)
+            return self._child(name)
+
+    class BadRoot(Root):
+        def __load__(self, name):
+            if name == 'explicit_none':
+                return self._child(None, name)
+            return self._child(name)
+
+    class Admin(Leaf):
+        pass
+
+    @Root.child_resource
+    class User(Leaf):
+        pass
+
+    return {
+        'root': Root(None),
+        'bad_root': BadRoot(None),
+        'admin_cls': Admin,
+        'user_cls': User}
+
+
 class TestBasicResource(object):
     def test_sub_resource_type(self, basic_tree):
         """Leaf is an instance of the Leaf class, for context selection."""
@@ -208,6 +245,33 @@ class TestMixedResource(object):
         root = mixed_tree['root']
         assert isinstance(root['ham'], mixed_tree['dynamic_cls'])
         assert isinstance(root['bacon'], mixed_tree['dynamic_cls'])
+
+
+class TestAlternateResourceClasses(object):
+    def test_common_child_resource(self, alternate_child_tree):
+        """"Retrieves an instance of the associated child class."""
+        root = alternate_child_tree['root']
+        assert type(root['john']) is alternate_child_tree['user_cls']
+
+    def test_alternate_child_resource(self, alternate_child_tree):
+        """Retrieves an instance of a loader-selected resource class."""
+        root = alternate_child_tree['root']
+        assert type(root['eve']) is alternate_child_tree['admin_cls']
+
+    def test_missing_child_resource(self, alternate_child_tree):
+        root = alternate_child_tree['bad_root']
+        with pytest.raises(TypeError) as excinfo:
+            root['adam']
+        # Check for the more informative message for the bad-config case
+        assert 'No child resource class is associated' in str(excinfo.value)
+        assert 'not callable' not in str(excinfo.value)
+
+    def test_bad_child_resource_class(self, alternate_child_tree):
+        root = alternate_child_tree['bad_root']
+        with pytest.raises(TypeError) as excinfo:
+            root['explicit_none']
+        # Check for the default Python non-callable error message
+        assert 'not callable' in str(excinfo.value)
 
 
 class TestAttributeAccess(object):
