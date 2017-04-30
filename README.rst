@@ -20,10 +20,10 @@ Pyramid's traversal.
     class UserCollection(Branch):
         """User collection, for listings, or loading single users."""
 
-        def __load__(self, path):
+        def __load__(self, key):
             """Return child resource with requested user included."""
-            user = USERS[path]  # Load user or raise KeyError.
-            return self._sprout(key, user=user)
+            user = USERS[key]  # Load user or raise KeyError.
+            return self._child(key, user=user)
 
 
     @UserCollection.child_resource

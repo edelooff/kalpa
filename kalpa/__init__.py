@@ -67,18 +67,29 @@ class Branch(with_metaclass(BranchType, Leaf)):
         """Dynamic resource loader for custom Branch classes.
 
         This method should either raise a KeyError or return an instantiated
-        resource class. Through one of _sprout(), _sprout_resource() or manual
-        instantiation. The response will be cached by the caller, __getitem__.
+        resource class. This can be achieved with the _child() method or manual
+        instantiation. The response will be cached by __getitem__().
         """
         raise KeyError(path)
 
-    def _sprout(self, _name, **attrs):
-        """Returns a child resource of the registered type."""
-        return self._CHILD_CLS(_name, self, **attrs)
+    def _child(self, *args, **attrs):
+        """Returns a newly instantiated child resource.
 
-    def _sprout_resource(self, _resource_cls, _name, **attrs):
-        """Returns a child resource of the provided type, with given name."""
-        return _resource_cls(_name, self, **attrs)
+        Positional arguments are either type+name or just a name. If the type
+        is not given, this defaults to the registered child resource class.
+
+        Additional named parameters are passed verbatim to the new instance.
+        """
+        if len(args) == 1:
+            if self._CHILD_CLS is None:
+                raise TypeError(
+                    'No child resource class is associated with %r. '
+                    'Provide one as the first argument' % self)
+            resource_class = self._CHILD_CLS
+            name, = args
+        else:
+            resource_class, name = args
+        return resource_class(name, self, **attrs)
 
     @classmethod
     def attach(cls, canonical_path, aliases=()):
@@ -92,7 +103,7 @@ class Branch(with_metaclass(BranchType, Leaf)):
 
     @classmethod
     def child_resource(cls, child_cls):
-        """Adds a resource class as the default child resource to sprout."""
+        """Adds a resource class as the default child class to instantiate."""
         cls._CHILD_CLS = child_cls
         return child_cls
 
