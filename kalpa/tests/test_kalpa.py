@@ -10,13 +10,12 @@ def basic_tree():
         - Static resource class attachment
         - Aliased resource attachment
     """
-    from kalpa import Root, Leaf
+    from kalpa import Root, Node, branch
 
     class Root(Root):
-        pass
+        leaf = branch('Leaf', aliases=('foliage', 'leaves'))
 
-    @Root.attach('leaf', aliases=['foliage', 'leaves'])
-    class Leaf(Leaf):
+    class Leaf(Node):
         pass
 
     return {
@@ -32,34 +31,34 @@ def branching_tree():
     This implicitly tests the following parts of kalpa:
 
         - Static resource class attachment
-        - Child resource assignment to Branch classes
+        - Child resource assignment to parent classes
         - Child resource creation using the registered class
         - Child resource creation using a specified class
     """
-    from kalpa import Root, Branch, Leaf
+    from kalpa import Root, Node
 
     class Root(Root):
         pass
 
     @Root.attach('objects')
-    class Collection(Branch):
+    class Collection(Node):
         def __load__(self, path):
             return self._child(path, fruit='apple', twice=path * 2)
 
     @Root.attach('people')
-    class People(Branch):
+    class People(Node):
         def __load__(self, path):
             return self._child(Person, path, first=path[0].upper())
 
     @Collection.child_resource
-    class Object(Branch):
+    class Object(Node):
         pass
 
     @Object.attach('votes')
-    class Votes(Leaf):
+    class Votes(Node):
         pass
 
-    class Person(Leaf):
+    class Person(Node):
         pass
 
     return {
@@ -78,22 +77,23 @@ def mixed_tree():
     This implicitly tests the following parts of kalpa:
 
         - Static resource class attachment
-        - Child resource assignment to Branch classes
+        - Child resource assignment to parent classes
         - Child resource creation using the registered class
     """
-    from kalpa import Root, Leaf
+    from kalpa import Root, Node, branch
 
     class Root(Root):
+        __child_cls__ = 'Dynamic'
+        eggs = branch('Static')
+        spam = branch('Static')
+
         def __load__(self, path):
             return self._child(path)
 
-    @Root.attach('spam')
-    @Root.attach('eggs')
-    class Static(Leaf):
+    class Static(Node):
         pass
 
-    @Root.child_resource
-    class Dynamic(Leaf):
+    class Dynamic(Node):
         pass
 
     return {
@@ -109,10 +109,10 @@ def alternate_child_tree():
 
     This implicitly tests the following parts of kalpa:
 
-        - Child resource assignment to Branch classes
+        - Child resource assignment to parent classes
         - Child resource creation using the registered class
     """
-    from kalpa import Root, Leaf
+    from kalpa import Root, Node
 
     class Root(Root):
         def __load__(self, name):
@@ -126,11 +126,11 @@ def alternate_child_tree():
                 return self._child(None, name)
             return self._child(name)
 
-    class Admin(Leaf):
+    class Admin(Node):
         pass
 
     @Root.child_resource
-    class User(Leaf):
+    class User(Node):
         pass
 
     return {
@@ -148,7 +148,7 @@ def branch_from_dict_tree():
 
         - Child resource assignment to Branch classes
     """
-    from kalpa import Root, Leaf
+    from kalpa import Root, Node
 
     class Root(Root):
         def __load__(self, name):
@@ -157,7 +157,7 @@ def branch_from_dict_tree():
             raise KeyError
 
     @Root.child_resource
-    class Person(Leaf):
+    class Person(Node):
         pass
 
     return {
@@ -301,16 +301,14 @@ class TestAlternateResourceClasses(object):
         root = alternate_child_tree['bad_root']
         with pytest.raises(TypeError) as excinfo:
             root['adam']
+
         # Check for the more informative message for the bad-config case
         assert 'No child resource class is associated' in str(excinfo.value)
-        assert 'not callable' not in str(excinfo.value)
 
     def test_bad_child_resource_class(self, alternate_child_tree):
         root = alternate_child_tree['bad_root']
         with pytest.raises(TypeError) as excinfo:
             root['explicit_none']
-        # Check for the default Python non-callable error message
-        assert 'not callable' in str(excinfo.value)
 
 
 class TestAttributeAccess(object):
@@ -400,7 +398,7 @@ def test_separate_subpath_registries(basic_tree, branching_tree):
     """Verify that subpath registries are not shared between classes."""
     basic_root = basic_tree['root_cls']
     branching_root = branching_tree['root_cls']
-    assert basic_root._SUBPATHS is not branching_root._SUBPATHS
+    assert basic_root._BRANCHES is not branching_root._BRANCHES
 
 
 def test_util_lineage(branching_tree):
