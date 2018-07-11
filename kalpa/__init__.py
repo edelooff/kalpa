@@ -146,24 +146,16 @@ class Node(with_metaclass(NodeMeta, object)):
         """Returns a simple resources representation."""
         return '<{}>'.format(type(self).__name__)
 
-    def _child(self, *args, **attrs):
+    def _child(self, resource_class, path, **attrs):
         """Returns a newly instantiated child resource.
 
-        Positional arguments are either type+name or just a name. If the type
-        is not given, this defaults to the registered child resource class.
+        The resource class can be either the class itself, the name of a Node
+        subclass, or a function returning the resource class.
 
         Additional named parameters are passed verbatim to the new instance.
         """
-        if len(args) == 1:
-            if self.__child_cls__ is None:
-                raise TypeError(
-                    'No child resource class is associated with %r. '
-                    'Provide one as the first argument' % self)
-            resource_class, name = self.__child_cls__, args[0]
-        else:
-            resource_class, name = args
         resource_class = resolve_resource(resource_class)
-        return resource_class(name, self, **attrs)
+        return resource_class(path, self, **attrs)
 
     def _child_from_dict(self, path, resource_params):
         if self.__child_cls__ is None:

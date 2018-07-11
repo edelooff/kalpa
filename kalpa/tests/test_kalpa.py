@@ -43,7 +43,7 @@ def branching_tree():
     @Root.attach('objects')
     class Collection(Node):
         def __load__(self, path):
-            return self._child(path, fruit='apple', twice=path * 2)
+            return {'fruit': 'apple', 'twice': path * 2}
 
     @Root.attach('people')
     class People(Node):
@@ -88,7 +88,7 @@ def mixed_tree():
         spam = branch('Static')
 
         def __load__(self, path):
-            return self._child(path)
+            return {}
 
     class Static(Node):
         pass
@@ -118,13 +118,13 @@ def alternate_child_tree():
         def __load__(self, name):
             if name in ('adam', 'eve'):
                 return self._child(Admin, name)
-            return self._child(name)
+            return {}
 
     class BadRoot(Root):
         def __load__(self, name):
             if name == 'explicit_none':
                 return self._child(None, name)
-            return self._child(name)
+            return {}
 
     class Admin(Node):
         pass
@@ -303,7 +303,8 @@ class TestAlternateResourceClasses(object):
             root['adam']
 
         # Check for the more informative message for the bad-config case
-        assert 'No child resource class is associated' in str(excinfo.value)
+        msg_part = 'child resource class (__child_cls__) should be defined'
+        assert msg_part in str(excinfo.value)
 
     def test_bad_child_resource_class(self, alternate_child_tree):
         root = alternate_child_tree['bad_root']
