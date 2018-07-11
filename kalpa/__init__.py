@@ -72,6 +72,10 @@ class Branch(with_metaclass(BranchType, Leaf)):
         """
         raise KeyError(path)
 
+    def __repr__(self):
+        """Returns a simple resources representation."""
+        return '<{}>'.format(type(self).__name__)
+
     def _child(self, *args, **attrs):
         """Returns a newly instantiated child resource.
 
