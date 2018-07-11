@@ -22,8 +22,7 @@ Pyramid's traversal.
 
         def __load__(self, key):
             """Return child resource with requested user included."""
-            user = USERS[key]  # Load user or raise KeyError.
-            return self._child(key, user=user)
+            return {'user': USERS[key]}  # Load user or raise KeyError.
 
 
     @UserCollection.child_resource
