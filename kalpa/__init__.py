@@ -61,7 +61,10 @@ class Branch(with_metaclass(BranchType, Leaf)):
         if self._SUBPATHS is not None and path in self._SUBPATHS:
             resource_class, name = self._SUBPATHS[path]
             return resource_class(name, self)
-        return self.__load__(path)
+        resource = self.__load__(path)
+        if isinstance(resource, dict):
+            return self._create_branch(path, resource)
+        return resource
 
     def __load__(self, path):
         """Dynamic resource loader for custom Branch classes.
@@ -71,6 +74,17 @@ class Branch(with_metaclass(BranchType, Leaf)):
         instantiation. The response will be cached by __getitem__().
         """
         raise KeyError(path)
+
+    def __repr__(self):
+        """Returns a simple resources representation."""
+        return '<{}>'.format(type(self).__name__)
+
+    def _create_branch(self, path, resource_params):
+        if self._CHILD_CLS is None:
+            raise ValueError(
+                'A child resource class should be defined when '
+                'using dict-like returns for __load__(). ')
+        return self._CHILD_CLS(path, self, **resource_params)
 
     def _child(self, *args, **attrs):
         """Returns a newly instantiated child resource.
