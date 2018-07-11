@@ -140,6 +140,31 @@ def alternate_child_tree():
         'user_cls': User}
 
 
+@pytest.fixture
+def branch_from_dict_tree():
+    """Returns a resource tree where sub-resources are created from dictionaries.
+
+    This implicitly tests the following parts of kalpa:
+
+        - Child resource assignment to Branch classes
+    """
+    from kalpa import Root, Leaf
+
+    class Root(Root):
+        def __load__(self, name):
+            if name == 'george':
+                return {'name': 'George', 'role': 'Widget maker'}
+            raise KeyError
+
+    @Root.child_resource
+    class Person(Leaf):
+        pass
+
+    return {
+        'root': Root(None),
+        'person_cls': Person}
+
+
 class TestBasicResource(object):
     def test_sub_resource_type(self, basic_tree):
         """Leaf is an instance of the Leaf class, for context selection."""
@@ -231,6 +256,20 @@ class TestBranchingResource(object):
         """Retrieving the same object twice should provide the same one."""
         root = branching_tree['root']
         assert root['people']['eve'] is root['people']['eve']
+
+    def test_resource_from_dict_return(self, branch_from_dict_tree):
+        """Returning a dict from __load__ creates the appropriate resource."""
+        root = branch_from_dict_tree['root']
+        george = root['george']
+        assert isinstance(george, branch_from_dict_tree['person_cls'])
+        assert george.name == 'George'
+        assert george.role == 'Widget maker'
+
+    def test_keyerror_for_nonexisting_branch(self, branch_from_dict_tree):
+        """Retrieving a bad key fron a branching resource raises KeyError."""
+        root = branch_from_dict_tree['root']
+        with pytest.raises(KeyError):
+            root['nonexistant']
 
 
 class TestMixedResource(object):
