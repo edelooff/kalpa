@@ -35,26 +35,25 @@ def branching_tree():
         - Child resource creation using the registered class
         - Child resource creation using a specified class
     """
-    from kalpa import Root, Node
+    from kalpa import Root, Node, branch
 
     class Root(Root):
-        pass
+        objects = branch('Collection')
+        people = branch('People')
 
-    @Root.attach('objects')
     class Collection(Node):
+        __child_cls__ = 'Object'
+
         def __load__(self, path):
             return {'fruit': 'apple', 'twice': path * 2}
 
-    @Root.attach('people')
     class People(Node):
         def __load__(self, path):
             return self._child(Person, path, first=path[0].upper())
 
-    @Collection.child_resource
     class Object(Node):
-        pass
+        votes = branch('Votes')
 
-    @Object.attach('votes')
     class Votes(Node):
         pass
 
@@ -115,6 +114,8 @@ def alternate_child_tree():
     from kalpa import Root, Node
 
     class Root(Root):
+        __child_cls__ = 'User'
+
         def __load__(self, name):
             if name in ('adam', 'eve'):
                 return self._child(Admin, name)
@@ -129,7 +130,6 @@ def alternate_child_tree():
     class Admin(Node):
         pass
 
-    @Root.child_resource
     class User(Node):
         pass
 
@@ -151,12 +151,13 @@ def branch_from_dict_tree():
     from kalpa import Root, Node
 
     class Root(Root):
+        __child_cls__ = 'Person'
+
         def __load__(self, name):
             if name == 'george':
                 return {'name': 'George', 'role': 'Widget maker'}
             raise KeyError
 
-    @Root.child_resource
     class Person(Node):
         pass
 

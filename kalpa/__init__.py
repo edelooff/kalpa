@@ -164,25 +164,6 @@ class Node(with_metaclass(NodeMeta, object)):
                 'when using dict-like returns for __load__(). ')
         return self._child(self.__child_cls__, path, **resource_params)
 
-    # #########################################################################
-    # Deprecated methods for implicit tree construction
-    #
-    @classmethod
-    def attach(cls, canonical_path, aliases=()):
-        """Adds a resource as the child of another resource."""
-        def _attach_resource(child_cls):
-            """Stores the sub-resource on all relevant paths."""
-            for path in [canonical_path] + list(aliases):
-                cls._BRANCHES[path] = Brancher(child_cls, canonical_path)
-            return child_cls
-        return _attach_resource
-
-    @classmethod
-    def child_resource(cls, child_cls):
-        """Adds a resource class as the default child class to instantiate."""
-        cls.__child_cls__ = child_cls
-        return child_cls
-
 
 class Root(Node):
     """Basic traversal root class to catch the initial request."""
