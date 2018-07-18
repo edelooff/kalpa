@@ -29,10 +29,12 @@ def test_delegate_only_initial_attributes(root):
         root['leaf'].new_attr
 
 
-def test_delegate_only_initial_attribute_values(root):
-    """Only the initial value for an attribute is available for delegation."""
-    root.request = 'new_mock_request'
-    assert root['leaf'].request == 'mock_request'
+def test_delegate_lazy_value_determination(root):
+    """Delegated attributes provide value at request time, but don't update."""
+    root.request = 'updated_request'
+    assert root['leaf'].request == 'updated_request'
+    root.request = 'original_request'
+    assert root['leaf'].request == 'updated_request'
 
 
 @pytest.mark.parametrize('name, attributes', PEOPLE.items())

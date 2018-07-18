@@ -98,7 +98,7 @@ class Node(with_metaclass(NodeMeta, object)):
     def __init__(self, _name, _parent, **attributes):
         self.__name__ = _name
         self.__parent__ = _parent
-        self.__attributes__ = attributes
+        self.__initial_attrs__ = set(attributes)
         for attr, value in iteritems(attributes):
             setattr(self, attr, value)
 
@@ -109,8 +109,8 @@ class Node(with_metaclass(NodeMeta, object)):
         optional keywords provided at initialization time are checked.
         """
         for resource in lineage(self):
-            if attr in resource.__attributes__:
-                value = self.__dict__[attr] = resource.__attributes__[attr]
+            if attr in resource.__initial_attrs__:
+                value = self.__dict__[attr] = getattr(resource, attr)
                 return value
         raise AttributeError(
             '{!r} object has no attribute {!r}'.format(self, attr))
