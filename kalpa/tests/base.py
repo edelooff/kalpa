@@ -30,6 +30,11 @@ class Root(Root):
     by_function = branch(lambda: ChildNode)
     by_name = branch('ChildNode')
 
+    conditional_always = branch('ChildNode', predicate=lambda res: True)
+    conditional_never = branch('ChildNode', predicate=lambda res: False)
+    conditional_request = branch(
+        'ChildNode', predicate=lambda res: res.request == 'conditional')
+
 
 class BadLoader(Node):
     """A Node class that defined a __load__ method but no __child_cls__."""
@@ -80,6 +85,13 @@ class Leaf(Node):
 
 class Admin(Node):
     """A person that additionally has an administrative role."""
+    databases = branch(
+        'Specialty', predicate=lambda res: 'database' in res.role.lower())
+    servers = branch(
+        'Specialty', predicate=lambda res: 'systems' in res.role.lower())
+
+    def __load__(self, name):
+        return self._child(ChildNode, name)
 
 
 class Person(Node):

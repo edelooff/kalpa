@@ -20,10 +20,21 @@ class DeclaredBranch(object):
     be provided as alternate names that the resource can be accessed through.
     Aliased paths can be accessed as normal, but resource_path functions from
     Pyramid's traversal machinery will return the canonical name.
+
+    In addition, a predicate function can be provided to determine whether this
+    branch is available at runtime. Upon attempted access of the branch, the
+    predicate function is provided the instantiated resource Node that the
+    branch is declared for. If the predicate returns a boolean truthy value,
+    the branch will be descended into. If the predicate returns a falsy value,
+    KeyError is raised and traversal will stop. A failed predicate will not
+    result in a call to __load__, as would happen if no branch were declared.
     """
-    def __init__(self, resource_name, aliases=(), branching_cls=None):
+    def __init__(
+            self, resource_name,
+            aliases=(), branching_cls=None, predicate=None):
         self.resource_name = resource_name
         self.aliases = aliases
+        self.predicate = predicate
         self._branching_cls = branching_cls or Brancher
 
     def generate_resources(self, attr):
@@ -33,7 +44,8 @@ class DeclaredBranch(object):
         well as all aliases that have been configured. The Brancher instance
         is shared across all 2-tuples.
         """
-        resource = self._branching_cls(self.resource_name, attr)
+        resource = self._branching_cls(
+            self.resource_name, attr, predicate=self.predicate)
         return ((path, resource) for path in chain([attr], self.aliases))
 
 
@@ -44,19 +56,29 @@ class Brancher(object):
     registered path is accessed, the Brancher retrieves the associated resource
     class from the registry and from it, creates the next Node for traversal.
     """
-    def __init__(self, node_cls, path):
+    def __init__(self, node_cls, path, predicate=None):
         """Initalizes the Brancher based on the given node class and path.
 
         The node class provided may be a class, the name of a registered class,
         or a callable that resolves to a class.
+
         The path provided will be used to instantiate the node with, and
         determines the resource_path as returned by Pyramid utility functions.
+
+        By default the branch is always available, though a predicate function
+        may be provided to control this. When the branch is accessed, this
+        function is called and passed the parent instantiated node. Its return
+        value should be a boolean that indicates whether the branch should be
+        available for the current request.
         """
         self._node_cls = node_cls
         self._path = path
+        self._predicate = predicate
 
     def __call__(self, parent):
         """Returns a resolved and instantiated node, with the given parent."""
+        if self._predicate is not None and not self._predicate(parent):
+            raise KeyError(parent)
         return self.node_cls(self._path, parent)
 
     @property

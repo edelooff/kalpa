@@ -117,3 +117,41 @@ def test_branch_load_missing_child_cls(root):
 def test_static_branch_on_loader(root, key, node_class):
     """Retrieving a static-attached branch from a node with a __child_cls__."""
     assert isinstance(root['objects'][key], node_class)
+
+
+# ################################
+# Tests for conditional branches
+#
+def test_conditional_always(root):
+    """Branch with a fixed 'True' predicate is always present."""
+    assert isinstance(root['conditional_always'], ChildNode)
+
+
+def test_conditional_never(root):
+    """Branch with a fixed 'False' predicate is always absent."""
+    with pytest.raises(KeyError):
+        root['condition_never']
+
+
+def test_conditional_static_attr(root):
+    """Branch with a predicate for a specific attribute value."""
+    with pytest.raises(KeyError):
+        root['conditional_request']
+    root.request = 'conditional'
+    assert isinstance(root['conditional_request'], ChildNode)
+
+
+@pytest.mark.parametrize('user, access_granted, access_denied', [
+    ('daniel', 'databases', 'servers'),
+    ('eve', 'servers', 'databases')])
+def test_conditional_loaded_attr(root, user, access_granted, access_denied):
+    """Branch with predicate for a __load__'ed node attribute value.
+
+    Tests declared conditional branches, verifies that failed predicates result
+    in KeyError rather than lookups to __load__, which is verified by loading
+    an undeclared path.
+    """
+    assert isinstance(root['people'][user][access_granted], Specialty)
+    assert isinstance(root['people'][user]['undeclared'], ChildNode)
+    with pytest.raises(KeyError):
+        root['people'][user][access_denied]
