@@ -6,7 +6,13 @@ from pyramid import location
 
 from . base import (
     Admin,
+    BaseBranch,
+    BaseNode,
     ChildNode,
+    ColoredBranch,
+    ColoredNode,
+    DiamondBranch,
+    DiamondNode,
     Leaf,
     Object,
     Person,
@@ -155,3 +161,45 @@ def test_conditional_loaded_attr(root, user, access_granted, access_denied):
     assert isinstance(root['people'][user]['undeclared'], ChildNode)
     with pytest.raises(KeyError):
         root['people'][user][access_denied]
+
+
+# ##############################################
+# Tests for subclassing and branch inheritance
+#
+@pytest.mark.parametrize('path, node_class', [
+    ('base_branch', BaseBranch),
+    ('colored_branch', BaseBranch),
+    ('colored_branch', ColoredBranch),
+    ('diamond_branch', BaseBranch),
+    ('diamond_branch', ColoredBranch),
+    ('diamond_branch', DiamondBranch)])
+def test_inheritance(root, path, node_class):
+    """Subclassed nodes are proper subclasses in the Python sense."""
+    assert isinstance(root[path], node_class)
+
+
+@pytest.mark.parametrize('branch', [
+    'base_branch', 'colored_branch', 'diamond_branch'])
+def test_inheritance_branch_shared(root, branch):
+    """Base class and subclass share paths declared on base class."""
+    assert isinstance(root[branch]['shared'], BaseNode)
+
+
+def test_inheritance_branch_single_direction(root, path='sub_only'):
+    """Branches on the subclass do not appear on the base class."""
+    assert isinstance(root['colored_branch'][path], ColoredNode)
+    assert isinstance(root['diamond_branch'][path], ColoredNode)
+    with pytest.raises(KeyError):
+        root['base_branch'][path]
+
+
+@pytest.mark.parametrize('branch, node_class', [
+    ('base_branch', BaseNode),
+    ('colored_branch', ColoredNode),
+    ('diamond_branch', DiamondNode)])
+def test_inheritance_branch_override(root, branch, node_class):
+    """Branches defined on the subclass take precedence over the baseclass.
+
+    This precedence matches the MRO used for diamond inheritance.
+    """
+    assert isinstance(root[branch]['local'], node_class)

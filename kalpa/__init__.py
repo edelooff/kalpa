@@ -7,6 +7,7 @@ from six import (
     with_metaclass)
 
 from .util import (
+    inherited_branches,
     lineage,
     memoize,
     register_resource,
@@ -99,7 +100,7 @@ class NodeMeta(type):
     def __new__(mcs, name, bases, attrs):
         should_register = not attrs.pop('__abstract__', False)
         attributes = {'__child_cls__': None}
-        branches = attributes['_BRANCHES'] = {}
+        branches = attributes['_BRANCHES'] = inherited_branches(bases)
         for attr, value in attrs.iteritems():
             if isinstance(value, DeclaredBranch):
                 branches.update(value.generate_resources(attr))

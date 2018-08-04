@@ -6,6 +6,19 @@ import functools
 _RESOURCE_REGISTRY = {}
 
 
+def inherited_branches(bases):
+    """Returns a dictionary of combined branches for all the given bases.
+
+    Bases are evaluated in reverse order (right to left), mimicking Python's
+    method resolution order. This means that branches defined on multiple
+    bases will take the value from the leftmost base.
+    """
+    branches = {}
+    for base in reversed(bases):
+        branches.update(getattr(base, '_BRANCHES', {}))
+    return branches
+
+
 def lineage(resource):
     """Yields the resource's lineage up to the root.
 

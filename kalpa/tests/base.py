@@ -35,6 +35,10 @@ class Root(Root):
     conditional_request = branch(
         'ChildNode', predicate=lambda res: res.request == 'conditional')
 
+    base_branch = branch('BaseBranch')
+    colored_branch = branch('ColoredBranch')
+    diamond_branch = branch('DiamondBranch')
+
 
 class BadLoader(Node):
     """A Node class that defined a __load__ method but no __child_cls__."""
@@ -92,6 +96,39 @@ class Admin(Node):
 
     def __load__(self, name):
         return self._child(ChildNode, name)
+
+
+class BaseBranch(Node):
+    """Baseclass to test branch inheritance."""
+    local = branch('BaseNode')
+    shared = branch('BaseNode')
+
+
+class BaseNode(Node):
+    """Child node for the BaseBranch."""
+
+
+class ColoredBranch(BaseBranch):
+    """Subclassed node to test branch inheritance."""
+    local = branch('ColoredNode')
+    sub_only = branch('ColoredNode')
+
+
+class ColoredNode(Node):
+    """Child node for the ColoredBranch."""
+
+
+class _DiamonBranch(Node):
+    """Subclassed node to test diamond inheritance."""
+    local = branch('DiamondNode')
+
+
+class DiamondBranch(_DiamonBranch, ColoredBranch):
+    """Subclassed node to test diamond inheritance."""
+
+
+class DiamondNode(Node):
+    """Child node for the DiamondBranch."""
 
 
 class Person(Node):
