@@ -11,27 +11,31 @@ Pyramid's traversal.
 
 .. code-block:: python
 
-    from kalpa import Root, Branch, Leaf
+    from kalpa import Root, Node, branch
 
     USERS = {...}
 
 
-    @Root.attach('users')
-    class UserCollection(Branch):
+    class Root(Root):
+        """Root resource for Pyramid traversal."""
+        users = branch('UserCollection')
+
+
+    class UserCollection(Node):
         """User collection, for listings, or loading single users."""
+        __child_cls__ = 'User'
 
         def __load__(self, key):
-            """Return child resource with requested user included."""
+            """Returns dict with attributes to create a child node from."""
             return {'user': USERS[key]}  # Load user or raise KeyError.
 
 
-    @UserCollection.child_resource
-    class User(Branch):
+    class User(Node):
         """User resource, a single loaded user."""
+        gallery = branch('UserGallery', aliases=['images'])
 
 
-    @User.attach('gallery', aliases=['images'])
-    class UserGallery(Leaf):
+    class UserGallery(Node):
         """Gallery of images posted by a user.
 
         Reachable as `/users/:id/gallery` but also `/users/:id/images`.
