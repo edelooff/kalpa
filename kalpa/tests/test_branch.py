@@ -103,7 +103,7 @@ def test_branch_load_cache(root, key_path):
 
 
 def test_branch_load_nonexisting(root):
-    """Retrieving a bad key fron a branching resource raises KeyError."""
+    """When __load__ returns a None value, this results in KeyError."""
     with pytest.raises(KeyError):
         root['people']['zenu']
 

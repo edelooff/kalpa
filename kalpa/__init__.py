@@ -152,6 +152,8 @@ class Node(with_metaclass(NodeMeta, object)):
         if path in self._BRANCHES:
             return self._BRANCHES[path](self)
         resource = self.__load__(path)
+        if resource is None:
+            raise KeyError
         if isinstance(resource, dict):
             return self._child_from_dict(path, resource)
         return resource

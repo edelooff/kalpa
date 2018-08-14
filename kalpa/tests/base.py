@@ -80,7 +80,7 @@ class People(Node):
     def __load__(self, name):
         if name in ADMINS:
             return self._child(Admin, name, **ADMINS[name])
-        return PEOPLE[name]
+        return PEOPLE.get(name)
 
 
 class Leaf(Node):
