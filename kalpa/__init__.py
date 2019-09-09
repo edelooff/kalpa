@@ -101,7 +101,7 @@ class NodeMeta(type):
         should_register = not attrs.pop('__abstract__', False)
         attributes = {'__child_cls__': None}
         branches = attributes['_BRANCHES'] = inherited_branches(bases)
-        for attr, value in attrs.iteritems():
+        for attr, value in iteritems(attrs):
             if isinstance(value, DeclaredBranch):
                 branches.update(value.generate_resources(attr))
             else:
