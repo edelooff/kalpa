@@ -10,7 +10,7 @@ def contents(filename):
 
 setup(
     name='kalpa',
-    version='0.5.0',
+    version='0.5.1',
     packages=find_packages(),
     author='Elmer de Looff',
     author_email='elmer.delooff@gmail.com',
