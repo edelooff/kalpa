@@ -1,3 +1,4 @@
+import functools
 import operator
 
 import pytest
@@ -26,7 +27,7 @@ def test_util_lineage(root):
 def test_find_parent_by_class(root, selector, expected_key_path):
     """Finding a parent resource by its class."""
     alice = root['people']['alice']
-    expected = reduce(operator.getitem, expected_key_path, root)
+    expected = functools.reduce(operator.getitem, expected_key_path, root)
     assert parent_by_class(alice, selector) is expected
 
 
@@ -37,7 +38,7 @@ def test_find_parent_by_class(root, selector, expected_key_path):
 def test_find_parent_by_class_name(root, selector, expected_key_path):
     """Finding a parent resource by its class name."""
     alice = root['people']['alice']
-    expected = reduce(operator.getitem, expected_key_path, root)
+    expected = functools.reduce(operator.getitem, expected_key_path, root)
     assert parent_by_class(alice, selector) is expected
 
 

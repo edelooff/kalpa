@@ -1,3 +1,4 @@
+import functools
 import itertools
 import operator
 
@@ -97,8 +98,8 @@ def test_branch_alternate_loading(root, user, node_class):
     ('objects', 'leaf'), ('people', 'charlie'), ('people', 'eve')])
 def test_branch_load_cache(root, key_path):
     """Retrieving the same object twice should provide the same one."""
-    first = reduce(operator.getitem, key_path, root)
-    second = reduce(operator.getitem, key_path, root)
+    first = functools.reduce(operator.getitem, key_path, root)
+    second = functools.reduce(operator.getitem, key_path, root)
     assert first is second
 
 
