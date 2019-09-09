@@ -1,5 +1,6 @@
 """Tests compatiblity and integration with Pyramid's traversal utlities."""
 
+import functools
 import operator
 
 import pytest
@@ -19,7 +20,7 @@ def test_find_root(root):
     ('/objects/apple/votes', ('objects', 'apple', 'votes'))])
 def test_find_resource(root, path, keys):
     """Resolving paths yields the expected resource."""
-    resource = reduce(operator.getitem, keys, root)
+    resource = functools.reduce(operator.getitem, keys, root)
     assert traversal.find_resource(root, path) == resource
 
 
@@ -28,7 +29,7 @@ def test_find_resource(root, path, keys):
     (('objects', 'pear', 'votes'), '/objects/pear/votes')])
 def test_resource_path(root, keys, path):
     """Resources generate the expected path."""
-    resource = reduce(operator.getitem, keys, root)
+    resource = functools.reduce(operator.getitem, keys, root)
     assert traversal.resource_path(resource) == path
 
 
